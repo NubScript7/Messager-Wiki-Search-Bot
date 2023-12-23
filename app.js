@@ -29,6 +29,8 @@ let messagesCount = 0;
 
 const message = [];
 
+const messageHistory = {};
+
 let cmdList = {
   "!help": help
 }
@@ -82,6 +84,16 @@ app.post("/webhook",async (req,res)=>{
   if(body.object === 'page'){
     
     message.push(body);
+    
+    for (const entry of body.entry) {
+      const user = entry.messaging[0];
+      const psid = user.sender.id;
+      const message = user.message.text;
+      const history = messageHistory[psid];
+      
+      callSendAPI(psid, "hey!");
+      
+    }
 
     res.status(200).send("EVENT_RECEIVED");
   }else{
@@ -119,7 +131,9 @@ function callSendAPI(sender_psid, response) {
     recipient: {
       id: sender_psid
     },
-    message: response
+    message: {
+      text: response
+   }
   }
   
   // Send the HTTP request to the Messenger Platform
