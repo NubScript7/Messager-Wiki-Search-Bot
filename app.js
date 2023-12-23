@@ -88,8 +88,7 @@ app.post("/webhook", async (req,res) => {
   if(body.object === 'page'){
     
     message.push(body);
-    
-    for (const entry of body.entry) {
+      const entry = body.entry[0];
       const user = entry.messaging[0];
       const psid = user.sender.id;
       const message = user.message?.text;
@@ -118,7 +117,6 @@ app.post("/webhook", async (req,res) => {
         }
         
         
-      }
       
       
     }
