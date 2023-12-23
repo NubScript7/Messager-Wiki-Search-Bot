@@ -23,6 +23,10 @@ let response = {
   callSendAPI(sender_psid, response);
 }
 
+/* autokill feature */
+
+let messagesCount = 0;
+
 const userMessages = {};
 
 let cmdList = {
@@ -80,6 +84,7 @@ app.post("/webhook",async (req,res)=>{
       let msg = webhook_event.message;
       console.log(sender_psid, msg);
       
+      /*
       if (!userMessages[sender_psid]) {
         userMessages[sender_psid] = {
           suggestion: [],
@@ -88,7 +93,7 @@ app.post("/webhook",async (req,res)=>{
           title: ""
         }
       }
-      
+      */
       
       
       return callSendAPI(sender_psid,{text: "DEBUG: default return"});
@@ -169,8 +174,19 @@ app.get("/webhook", (req, res) => {
   }
 });
 
+setInterval(()=>{
+  if (messagesCount >= 100){
+    // if program still trying to send message consider self kill
+    exit(1);
+  }
+  //clear messageCount every minute
+  messagesCount = 0;
+},60E4)
+
 // Sends response messages via the Send API
 function callSendAPI(sender_psid, response) {
+  messagesCount += 1;
+  if (messagesCount >= 10)return;
   // Construct the message body
   let request_body = {
     recipient: {
