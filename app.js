@@ -72,7 +72,7 @@ app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
   if(body.object === 'page'){
-    
+    console.log(body);
     body.entry.forEach(async (entry)=>{
     if(entry.messaging[0].message?.is_echo===true)return;
       let webhook_event = entry.messaging[0];
@@ -89,6 +89,10 @@ app.post("/webhook",async (req,res)=>{
           title: ""
         }
       }
+      
+      
+      
+      return callSendAPI(sender_psid, "DEBUG: default return");
       
       /*check if the webhook event is a search or command*/
             
