@@ -72,14 +72,13 @@ app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
   if(body.object === 'page'){
-    console.log(body);
     body.entry.forEach(async (entry)=>{
     if(entry.messaging[0].message?.is_echo===true)return;
       let webhook_event = entry.messaging[0];
-      
       let sender_psid = webhook_event.sender.id;
       
       let msg = webhook_event.message;
+      console.log(sender_psid, msg);
       
       if (!userMessages[sender_psid]) {
         userMessages[sender_psid] = {
@@ -92,7 +91,7 @@ app.post("/webhook",async (req,res)=>{
       
       
       
-      return callSendAPI(sender_psid, "DEBUG: default return");
+      return callSendAPI(sender_psid,{text: "DEBUG: default return"});
       
       /*check if the webhook event is a search or command*/
             
@@ -101,7 +100,7 @@ app.post("/webhook",async (req,res)=>{
         if(cmdList[msg.text]){
           cmdList[msg.text](sender_psid);
         }else{
-          callSendAPI(sender_psid,{"text":"im sorry but i dont think thats a valid command..."});
+          callSendAPI(sender_psid,{text:"im sorry but i dont think thats a valid command..."});
         }
       } else if (msg&&msg.text[0]!=="!") {
         console.log("user asked");
@@ -110,20 +109,20 @@ app.post("/webhook",async (req,res)=>{
           console.log("user asked, gate1");
           const suggestion = await getSuggestion(msg.text);
           userMessages[sender_psid].suggestion = suggestion;
-          if(suggestion.length === 0)return callSendAPI(sender_psid,"no suggestion found, please try another keyword...");
+          if(suggestion.length === 0)return callSendAPI(sender_psid,{text: "no suggestion found, please try another keyword..."});
           let suggestionString = "";
           suggestion.forEach((s,i) => {
             suggestionString += `${i+1}. ${s}\n`
           });
           userMessages[sender_psid].title = msg.text;
           callSendAPI(sender_psid,suggestionString);
-          callSendAPI(sender_psid,"Enter the number of the article you want to read:");
+          callSendAPI(sender_psid,{text:"Enter the number of the article you want to read:"});
         } else if (userMessages[sender_psid]?.suggestion && !userMessages[sender_psid].title) {
           console.log("user asked, gate2");
           const choice = parseInt(msg.text);
-          if (isNaN)return callSendAPI(sender_psid,"Sorry! the number you gave was invalid, cancelling search...");
+          if (isNaN)return callSendAPI(sender_psid,{text:"Sorry! the number you gave was invalid, cancelling search..."});
           const selectedTitle = userMessages[sender_psid].suggestions[choice - 1];
-          if (!selectedTitle)return callSendAPI(sender_psid,"Sorry no content was found, please try again!");
+          if (!selectedTitle)return callSendAPI(sender_psid,{text:"Sorry no content was found, please try again!"});
           const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
           
           try {
@@ -134,11 +133,11 @@ app.post("/webhook",async (req,res)=>{
 
             return callSendAPI(sender_psid, `${page.title}\n\n${introWithoutTags.trim()}`);
           } catch (error) {
-            return callSendAPI(sender_psid,'Error fetching article content:' + error.message);
+            return callSendAPI(sender_psid,{text: `Error fetching article content: ${error.message}`});
           }
           
         } else {
-          return callSendAPI(sender_psid,"INTERNAL: Server Error.");
+          return callSendAPI(sender_psid,{text: "INTERNAL: Server Error."});
         }
       }
     })
