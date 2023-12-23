@@ -104,7 +104,7 @@ app.post("/webhook", async (req,res) => {
             callSendAPI(psid, "gate 1");
             messageHistory[psid] = {
               gate: 1,
-              suggestion: suggestionArray
+              suggestion: []
             }
         } else if (history?.gate == 1 && history?.suggestion.length >= 1) {
           callSendAPI(psid, "gate 2");
