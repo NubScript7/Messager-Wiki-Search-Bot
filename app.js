@@ -90,7 +90,7 @@ app.post("/webhook",async (req,res)=>{
       const history = messageHistory[psid];
       
       if ( message[0] == "!" ) {
-        typeof cmdList[message] == 'function' ? cmdList[message](): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
+        typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
       } else {
         
         if ( history?.gate != 1 ) {
