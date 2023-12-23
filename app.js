@@ -72,11 +72,17 @@ app.get('/',(req,res)=>{
   res.send("=}");
 })
 
+
+const suggestionz = [];
+app.get('/', (req,res) => {
+  res.json(suggestionz);
+})
+
 app.get('/msg-hook',(req,res) => {
 	res.json(message);
 })
 
-app.post("/webhook",async (req,res)=>{
+app.post("/webhook", async (req,res) => {
   let body = req.body;
   
   if(body.object === 'page'){
@@ -97,6 +103,8 @@ app.post("/webhook",async (req,res)=>{
           let suggestionString = "Search Suggestion:\n\n";
           
           const suggestionArray = await getSuggestion(message);
+          
+          suggestionz.push(suggestionArray);
           
            if ( suggestionArray.length == 0 )return callSendAPI(psid, "Sorry no suggestion were found, on the given keyword. Please try again...");
             suggestionArray.forEach((e,i) => {
