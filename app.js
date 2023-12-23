@@ -74,7 +74,7 @@ app.get('/',(req,res)=>{
 
 
 const suggestionz = [];
-app.get('/', (req,res) => {
+app.get('/suggestion', (req,res) => {
   res.json(suggestionz);
 })
 
