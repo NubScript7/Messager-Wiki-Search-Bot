@@ -76,6 +76,7 @@ app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
   if(body.object === 'page'){
+    console.log(body,body.entry,)
     for (const entry of body.entry) {
       console.log(entry.messaging[0])
       if(entry.messaging[0].message?.is_echo===true)return;
@@ -97,8 +98,7 @@ app.post("/webhook",async (req,res)=>{
       */
       
       
-      return callSendAPI(sender_psid,{text: "DEBUG: default return"});
-      
+            
       /*check if the webhook event is a search or command*/
             
       if (msg&&msg.text[0]==="!"){
@@ -108,43 +108,9 @@ app.post("/webhook",async (req,res)=>{
         }else{
           callSendAPI(sender_psid,{text:"im sorry but i dont think thats a valid command..."});
         }
-      } else if (msg&&msg.text[0]!=="!") {
-        console.log("user asked");
       
-        if(userMessages[sender_psid] && !userMessages[sender_psid].suggestion){
-          console.log("user asked, gate1");
-          const suggestion = await getSuggestion(msg.text);
-          userMessages[sender_psid].suggestion = suggestion;
-          if(suggestion.length === 0)return callSendAPI(sender_psid,{text: "no suggestion found, please try another keyword..."});
-          let suggestionString = "";
-          suggestion.forEach((s,i) => {
-            suggestionString += `${i+1}. ${s}\n`
-          });
-          userMessages[sender_psid].title = msg.text;
-          callSendAPI(sender_psid,suggestionString);
-          callSendAPI(sender_psid,{text:"Enter the number of the article you want to read:"});
-        } else if (userMessages[sender_psid]?.suggestion && !userMessages[sender_psid].title) {
-          console.log("user asked, gate2");
-          const choice = parseInt(msg.text);
-          if (isNaN)return callSendAPI(sender_psid,{text:"Sorry! the number you gave was invalid, cancelling search..."});
-          const selectedTitle = userMessages[sender_psid].suggestions[choice - 1];
-          if (!selectedTitle)return callSendAPI(sender_psid,{text:"Sorry no content was found, please try again!"});
-          const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
-          
-          try {
-            const response = await requestSync(apiUrl);
-            const page = Object.values(response.data.query.pages)[0];
-
-            const introWithoutTags = removeTags(page.extract);
-
-            return callSendAPI(sender_psid, `${page.title}\n\n${introWithoutTags.trim()}`);
-          } catch (error) {
-            return callSendAPI(sender_psid,{text: `Error fetching article content: ${error.message}`});
-          }
-          
-        } else {
-          return callSendAPI(sender_psid,{text: "INTERNAL: Server Error."});
-        }
+      } else if (msg&&msg.text[0]!=="!") {
+        callSendAPI(sender_psid,{text: "DEBUG: default return"});
       }
     }
 
@@ -175,19 +141,10 @@ app.get("/webhook", (req, res) => {
   }
 });
 
-setInterval(()=>{
-  if (messagesCount >= 100){
-    // if program still trying to send message consider self kill
-    exit(1);
-  }
-  //clear messageCount every minute
-  messagesCount = 0;
-},60E4)
-
 // Sends response messages via the Send API
 function callSendAPI(sender_psid, response) {
-  messagesCount += 1;
   if (messagesCount >= 10)return;
+  messagesCount += 1;
   // Construct the message body
   let request_body = {
     recipient: {
