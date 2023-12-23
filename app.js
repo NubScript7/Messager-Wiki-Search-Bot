@@ -112,7 +112,7 @@ app.post("/webhook",async (req,res)=>{
           userMessages[sender_psid].title = msg.text;
           callSendAPI(sender_psid,suggestionString);
           callSendAPI(sender_psid,"Enter the number of the article you want to read:");
-        } else if (userMessages[sender_psid]?.suggestion && !userMessages[sender_psid].title)) {
+        } else if (userMessages[sender_psid]?.suggestion && !userMessages[sender_psid].title) {
           
           const choice = parseInt(msg.text);
           if (isNaN)return callSendAPI(sender_psid,"Sorry! the number you gave was invalid, cancelling search...");
