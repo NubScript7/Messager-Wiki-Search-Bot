@@ -77,7 +77,7 @@ app.post("/webhook",async (req,res)=>{
   
   if(body.object === 'page'){
     
-    message.append(body)
+    message.push(body);
 
     res.status(200).send("EVENT_RECEIVED");
   }else{
