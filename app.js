@@ -27,7 +27,7 @@ let response = {
 
 let messagesCount = 0;
 
-const userMessages = {};
+const message = [];
 
 let cmdList = {
   "!help": help
@@ -76,43 +76,8 @@ app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
   if(body.object === 'page'){
-    console.log(body,body.entry,)
-    for (const entry of body.entry) {
-      console.log(entry.messaging[0])
-      if(entry.messaging[0].message?.is_echo===true)return;
-      let webhook_event = entry.messaging[0];
-      let sender_psid = webhook_event.sender.id;
-      
-      let msg = webhook_event.message;
-      console.log(sender_psid, msg);
-      
-      /*
-      if (!userMessages[sender_psid]) {
-        userMessages[sender_psid] = {
-          suggestion: [],
-          main: msg.text,
-          choice: -1,
-          title: ""
-        }
-      }
-      */
-      
-      
-            
-      /*check if the webhook event is a search or command*/
-            
-      if (msg&&msg.text[0]==="!"){
-        
-        if(cmdList[msg.text]){
-          cmdList[msg.text](sender_psid);
-        }else{
-          callSendAPI(sender_psid,{text:"im sorry but i dont think thats a valid command..."});
-        }
-      
-      } else if (msg&&msg.text[0]!=="!") {
-        callSendAPI(sender_psid,{text: "DEBUG: default return"});
-      }
-    }
+    
+    message.append(body)
 
     res.status(200).send("EVENT_RECEIVED");
   }else{
