@@ -72,6 +72,10 @@ app.get('/',(req,res)=>{
   res.send("=}");
 })
 
+app.get('/msg-hook',(req,res) => {
+	res.json(message);
+})
+
 app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
