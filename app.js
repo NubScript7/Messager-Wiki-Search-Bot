@@ -76,8 +76,9 @@ app.post("/webhook",async (req,res)=>{
   let body = req.body;
   
   if(body.object === 'page'){
-    body.entry.forEach(async (entry)=>{
-    if(entry.messaging[0].message?.is_echo===true)return;
+    for (const entry of body.entry) {
+      console.log(entry.messaging[0])
+      if(entry.messaging[0].message?.is_echo===true)return;
       let webhook_event = entry.messaging[0];
       let sender_psid = webhook_event.sender.id;
       
@@ -145,7 +146,7 @@ app.post("/webhook",async (req,res)=>{
           return callSendAPI(sender_psid,{text: "INTERNAL: Server Error."});
         }
       }
-    })
+    }
 
     res.status(200).send("EVENT_RECEIVED");
   }else{
@@ -202,7 +203,7 @@ function callSendAPI(sender_psid, response) {
     method: "POST",
     json: request_body
   }, err => {
-      if(!!err)return callSendAPI(sender_psid,"sorry! the message was not able to be processed, please try again!");
+      if(!!err)return callSendAPI(sender_psid,{text:"sorry! the message was not able to be processed, please try again!"});
   });
 }
 
