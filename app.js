@@ -65,7 +65,7 @@ async function getSuggestion(keyword) {
 
 
 app.get("/msg-log",(req,res)=>{
-  res.json(userMessages);
+  res.json(messageHistory);
 })
 
 app.get('/',(req,res)=>{
