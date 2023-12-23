@@ -100,8 +100,10 @@ app.post("/webhook",async (req,res)=>{
           callSendAPI(sender_psid,{"text":"im sorry but i dont think thats a valid command..."});
         }
       } else if (msg&&msg.text[0]!=="!") {
+        console.log("user asked");
       
         if(userMessages[sender_psid] && !userMessages[sender_psid].suggestion){
+          console.log("user asked, gate1");
           const suggestion = await getSuggestion(msg.text);
           userMessages[sender_psid].suggestion = suggestion;
           if(suggestion.length === 0)return callSendAPI(sender_psid,"no suggestion found, please try another keyword...");
@@ -113,7 +115,7 @@ app.post("/webhook",async (req,res)=>{
           callSendAPI(sender_psid,suggestionString);
           callSendAPI(sender_psid,"Enter the number of the article you want to read:");
         } else if (userMessages[sender_psid]?.suggestion && !userMessages[sender_psid].title) {
-          
+          console.log("user asked, gate2");
           const choice = parseInt(msg.text);
           if (isNaN)return callSendAPI(sender_psid,"Sorry! the number you gave was invalid, cancelling search...");
           const selectedTitle = userMessages[sender_psid].suggestions[choice - 1];
