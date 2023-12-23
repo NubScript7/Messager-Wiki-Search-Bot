@@ -131,6 +131,8 @@ app.post("/webhook",async (req,res)=>{
             return callSendAPI(sender_psid,'Error fetching article content:' + error.message);
           }
           
+        } else {
+          return callSendAPI(sender_psid,"INTERNAL: Server Error.");
         }
       }
     })
