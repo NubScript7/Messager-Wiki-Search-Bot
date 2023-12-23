@@ -14,12 +14,10 @@ app.set('view engine',"ejs");
 const request = require("request");
 
 function help(sender_psid) {
-let response = {
-  "text": `
+let response = `
       the list of commands:          
         !help - prints cmd list
   `
-}
   callSendAPI(sender_psid, response);
 }
 
@@ -91,7 +89,63 @@ app.post("/webhook",async (req,res)=>{
       const message = user.message.text;
       const history = messageHistory[psid];
       
-      callSendAPI(psid, "hey!");
+      if ( message[0] == "!" ) {
+        typeof cmdList[message] == 'function' ? cmdList[message](): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
+      } else {
+        
+        if ( history?.gate != 1 ) {
+          let suggestionString = "Search Suggestion:\n\n";
+          
+          const suggestionArray = await getSuggestion(message);
+          
+           if ( suggestionArray.length == 0 )return callSendAPI(psid, "Sorry no suggestion were found, on the given keyword. Please try again...");
+            suggestionArray.forEach((e,i) => {
+              suggestionString += `${i + 1}. ${e}\n`
+            });
+            
+            suggestionString += "Enter the number of the article you want to read:";
+            callSendAPI(psid, suggestionString);
+            
+            messageHistory[psid].gate = 1;
+            messageHistory[psid].suggestion = suggestionArray;
+        } else if (history?.gate == 1 && history?.suggestion.length >= 1) {
+          
+          const choice = parseInt(message);
+          if ( isNaN(choice) )return callSendAPI(psid, "Invalid Choice! that is not a number, cancelling search...");
+          const selectedTitle = history.suggestion[choice - 1];
+          if ( !selectedTitle )return callSendAPI(psid, "Invalid Choice! that is not in the suggestion list, cancelling search...");
+          
+          if ( isNaN(choice) || !selectedTitle ) {
+            delete messageHistory[psid];
+            return
+          }
+          
+          /* to fix start */
+          
+          const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
+
+          try {
+            const response = await requestSync(apiUrl);
+            const page = Object.values(response.data.query.pages)[0];
+
+            const introWithoutTags = removeTags(page.extract);
+
+            callSendAPI(psid, `${page.title}\n\n${introWithoutTags.trim()}`);
+          } catch (error) {
+            callSendAPI(psid,`Error fetching article content: ${error.message}`);
+          }
+          
+          /* to fix end */
+          
+        } else {
+          
+          callSendAPI(psid, "How did we go here?");
+          
+        }
+        
+        
+      }
+      
       
     }
 
