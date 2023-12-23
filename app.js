@@ -73,7 +73,7 @@ app.post("/webhook",async (req,res)=>{
   
   if(body.object === 'page'){
     
-    body.entry.forEach((entry)=>{
+    body.entry.forEach(async (entry)=>{
     if(entry.messaging[0].message?.is_echo===true)return;
       let webhook_event = entry.messaging[0];
       
