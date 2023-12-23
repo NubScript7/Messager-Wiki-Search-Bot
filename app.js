@@ -92,7 +92,8 @@ app.post("/webhook", async (req,res) => {
     for (const entry of body.entry) {
       const user = entry.messaging[0];
       const psid = user.sender.id;
-      const message = user.message.text;
+      const message = user.message?.text;
+      if ( !message )return;
       const history = messageHistory[psid];
       
       if ( message[0] == "!" ) {
