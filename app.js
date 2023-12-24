@@ -131,7 +131,7 @@ app.get("/webhook", (req, res) => {
   }
 });
 
-async function callSendAPI(sender_psid,response) {
+async function callSendAPI(sender_psid,res) {
 	if (messagesCount >= 10)return;
 	messagesCount += 1;
 	
@@ -139,7 +139,7 @@ async function callSendAPI(sender_psid,response) {
 		recipient: {
 			id: sender_psid
 		},
-		message: response
+		message: res
 	}
 	
 	const response = await axios.post(
