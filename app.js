@@ -34,10 +34,10 @@ let cmdList = {
 async function requestSync(url,method="GET",body,params) {
   if (method == "POST") {
   	const response = await axios.post(url,body,params);
-  	return response;
+  	return response.data;
   } else if (method == "GET") {
   	const response = await axios.get(url);
-  	return response;
+  	return response.data;
   } else {
   	throw new Error(`method ${method} is not a valid http method`);
   }
