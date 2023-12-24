@@ -142,11 +142,10 @@ function callSendAPI(sender_psid,response) {
 		message: response
 	}
 	
-	axios.post("https://graph.facebook.com/v2.6/me/messages", {
-		request_body,
-		access_token: process.env.FB_PAGE_ACCESS_TOKEN
-	},{
-		params: request_body,
+	axios.post("https://graph.facebook.com/v2.6/me/messages",request_body,{
+		params: {
+			access_token: process.env.FB_PAGE_ACCESS_TOKEN
+		},
 		headers: {
 			'Content-Type': 'application/json'
 		}
