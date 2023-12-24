@@ -4,14 +4,16 @@ environment variables
 */
 
 const express = require('express');
+const asyncRouter = require("express-promise-router")();
 const cors = require("cors");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(asyncRouter);
 app.set('view engine',"ejs");
 
-const request = require("request");
+const request = require("axios");
 
 function help(sender_psid) {
 let response = `
@@ -25,24 +27,20 @@ let response = `
 
 let messagesCount = 0;
 
-const message = [];
-
-const messageHistory = {};
-
 let cmdList = {
   "!help": help
 }
 
-async function requestSync(url) {
-  return new Promise((resolve, reject) => {
-    request(url, { json: true }, (error, response, body) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(body);
-      }
-    });
-  });
+async function requestSync(url,method="GET",body,params) {
+  if (method == "POST") {
+  	const response = await axios.post(url,body,params);
+  	return response;
+  } else if (method == "GET") {
+  	const response = await axios.get(url);
+  	return response;
+  } else {
+  	throw new Error(`method ${method} is not a valid http method`);
+  }
 }
 
 /*  wikipedia mediapedia API  */
@@ -82,50 +80,33 @@ app.get('/msg-hook',(req,res) => {
 	res.json(message);
 })
 
-app.post("/webhook", async (req,res) => {
+asyncRouter.post("/webhook", async (req,res) => {
   let body = req.body;
   
   if(body.object === 'page'){
     
-    message.push(body);
       const entry = body.entry[0];
       const user = entry.messaging[0];
       const psid = user.sender.id;
       const message = user.message?.text;
       if ( !message )return;
-      const history = messageHistory[psid];
       
       if ( message[0] == "!" ) {
         typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
       } else {
         
-        if ( history?.gate != 1 ) {
-            callSendAPI(psid, "gate 1");
-            messageHistory[psid] = {
-              gate: 1,
-              suggestion: []
-            }
-        } else if (history?.gate == 1 && history?.suggestion.length >= 1) {
-          callSendAPI(psid, "gate 2");
-          
-          delete messageHistory[psid];
-          
-        } else {
-          
-          callSendAPI(psid, "How did we go here?");
-          
-        }
+        
+        callSendAPI(psid, "DEBUG: default return "+Date.now())
         
         
-      
-      
-    }
+      }
+        
 
-    res.status(200).send("EVENT_RECEIVED");
+    res.sendStatus(200).send("EVENT_RECEIVED");
   }else{
     res.sendStatus(404);
   }
-})
+});
 
 app.get("/webhook", (req, res) => {
   let verifyToken = process.env.FB_PAGE_ACCESS_TOKEN;
@@ -145,33 +126,35 @@ app.get("/webhook", (req, res) => {
       // Respond with '403 Forbidden' if verify tokens do not match
       res.sendStatus(403);
     }
+  } else {
+    res.sendStatus(403);
   }
 });
 
-// Sends response messages via the Send API
-function callSendAPI(sender_psid, response) {
-  if (messagesCount >= 10)return;
-  messagesCount += 1;
-  // Construct the message body
-  let request_body = {
-    recipient: {
-      id: sender_psid
-    },
-    message: {
-      text: response
-   }
-  }
-  
-  // Send the HTTP request to the Messenger Platform
-  request({
-    uri: "https://graph.facebook.com/v2.6/me/messages",
-    qs: { access_token: process.env.FB_PAGE_ACCESS_TOKEN },
-    method: "POST",
-    json: request_body
-  }, err => {
-      if(!!err)return callSendAPI(sender_psid,{text:"sorry! the message was not able to be processed, please try again!"});
-  });
+function callSendAPI(sender_psid,response) {
+	if (messagesCount >= 10)return;
+	messagesCount += 1;
+	
+	let request_body = {
+		recipient: {
+			id: sender_psid
+		},
+		message: response
+	}
+	
+	axios.post("https://graph.facebook.com/v2.6/me/messages", {
+		request_body,
+		access_token: process.env.FB_PAGE_ACCESS_TOKEN
+	},{
+		params: request_body,
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	})
+	
+	
 }
+
 
 app.listen(process.env.PORT || 3000,()=>console.log('service online'));
         
