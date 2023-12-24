@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(asyncRouter);
 app.set('view engine',"ejs");
 
-const request = require("axios");
+const axios = require("axios");
 
 function help(sender_psid) {
 let response = `
