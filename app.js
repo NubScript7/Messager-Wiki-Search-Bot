@@ -95,8 +95,8 @@ asyncRouter.post("/webhook", async (req,res) => {
         typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
       } else {
         
-        
-        callSendAPI(psid, "DEBUG: default return "+Date.now())
+        console.log("DEBUG: savepoint: not command")
+        await callSendAPI(psid, "DEBUG: default return "+Date.now())
         
         
       }
@@ -131,7 +131,7 @@ app.get("/webhook", (req, res) => {
   }
 });
 
-function callSendAPI(sender_psid,response) {
+async function callSendAPI(sender_psid,response) {
 	if (messagesCount >= 10)return;
 	messagesCount += 1;
 	
@@ -142,16 +142,20 @@ function callSendAPI(sender_psid,response) {
 		message: response
 	}
 	
-	axios.post("https://graph.facebook.com/v2.6/me/messages",request_body,{
-		params: {
-			access_token: process.env.FB_PAGE_ACCESS_TOKEN
-		},
-		headers: {
-			'Content-Type': 'application/json'
+	const response = await axios.post(
+		"https://graph.facebook.com/v2.6/me/messages",
+		request_body,
+		{
+			params: {
+				access_token: process.env.FB_PAGE_ACCESS_TOKEN
+			},
+			headers: {
+				'Content-Type': 'application/json'
+			}
 		}
-	})
+	)
 	
-	
+	return response.data;
 }
 
 
