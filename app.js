@@ -139,7 +139,9 @@ async function callSendAPI(sender_psid,res) {
 		recipient: {
 			id: sender_psid
 		},
-		message: res
+		message: {
+			text: res
+		}
 	}
 	
 	const response = await axios.post(
