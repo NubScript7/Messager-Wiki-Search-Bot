@@ -72,7 +72,6 @@ app.get('/',(req,res)=>{
   res.send("=}");
 })
 
-
 app.get('/msg-hook',(req,res) => {
 	res.json(message);
 })
@@ -116,13 +115,13 @@ asyncRouter.post("/webhook", async (req,res) => {
         	const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
         	try {
         		const response = await requestSync(apiUrl);
-				const page = Object.values(response.data.query.pages)[0];
+				const page = Object.values(response.query.pages)[0];
 
         		const introWithoutTags = removeTags(page.extract);
 
-        		return callSendAPI(psid, `${page.title}\n\n${introWithoutTags.trim()}`);
+        		callSendAPI(psid, `${page.title}\n\n${introWithoutTags.trim()}`);
         	} catch (error) {
-        		return callSendAPI(psid, "INTERNAL: Error fetching article content.");
+        		callSendAPI(psid, "INTERNAL: Error fetching article content.");
         	}
         	
         	delete msgHistory[psid];
