@@ -108,9 +108,9 @@ asyncRouter.post("/webhook", async (req,res) => {
 		} else if (history?.gate == 1 && history?.suggestions.length >= 1) {
 			//gate 2, get user message and previous suggestion to get the final search use
 			const searchIndex = parseInt(message);
-			if (isNaN(searchIndex))return callSendAPI(psid, "Sorry! Invalid number, cancelling search...");
+			if (isNaN(searchIndex))return callSendAPI(psid, "Sorry! Invalid number, please pick another one.");
 			const selectedTitle = history.suggestions[searchIndex - 1];
-        	if (!selectedTitle)return callSendAPI(psid, "Sorry no content was found, please try again!");
+        	if (!selectedTitle)return callSendAPI(psid, "Sorry! no content was found, please try again.");
         	
         	const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
         	try {
