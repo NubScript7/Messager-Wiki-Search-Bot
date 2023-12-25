@@ -124,6 +124,8 @@ asyncRouter.post("/webhook", async (req,res) => {
         	} catch (error) {
         		return callSendAPI(psid, "INTERNAL: Error fetching article content.");
         	}
+        	
+        	delete msgHistory[psid];
 		
 		}
         
