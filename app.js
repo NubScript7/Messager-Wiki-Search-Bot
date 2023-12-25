@@ -96,16 +96,41 @@ asyncRouter.post("/webhook", async (req,res) => {
 		if (!history || history?.gate != 1) {
 			// gate 1, get user message and search for keywords related to the message
 			const suggestions = await getSuggestion(message);
-			let responseString = '1. '
+			if (suggestions.length === 0)return callSendAPI(psid, "No suggestion found from given keyword.");
+			let responseString = 'Search Suggestions:\n1. ';
 			responseString += suggestions.reduce((p,n,i) => `${p}\n${i+1}. ${n}`);
+			responseString += "\n\nSelect a number to search.";
 			await callSendAPI(psid, responseString);
 			
+			msgHistory[psid] = {
+				gate: 1,
+				suggestions
+			}
+		} else if (history?.gate == 1 && history?.suggestions.length >= 1) {
+			//gate 2, get user message and previous suggestion to get the final search use
+			const searchIndex = parseInt(message);
+			if (isNaN(searchIndex))return callSendAPI(psid, "Sorry! Invalid number, cancelling search...");
+			const selectedTitle = history.suggestions[searchIndex - 1];
+        	if (!selectedTitle)return callSendAPI(psid, "Sorry no content was found, please try again!");
+        	
+        	const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&titles=${encodeURIComponent(selectedTitle)}`;
+        	try {
+        		const response = await requestSync(apiUrl);
+				const page = Object.values(response.data.query.pages)[0];
+
+        		const introWithoutTags = removeTags(page.extract);
+
+        		return callSendAPI(psid, `${page.title}\n\n${introWithoutTags.trim()}`);
+        	} catch (error) {
+        		return callSendAPI(psid, "INTERNAL: Error fetching article content.");
+        	}
+		
 		}
         
 	}
         
 
-    res.sendStatus(200).send("EVENT_RECEIVED");
+	res.send("EVENT_RECEIVED");
     }
     
   }else{
