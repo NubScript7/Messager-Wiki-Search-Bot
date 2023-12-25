@@ -45,6 +45,8 @@ async function requestSync(url,method="GET",body,params) {
 
 /*  wikipedia mediapedia API  */
 
+const msgHistory = {};
+
 function removeTags(a) {
   return output = a.replace(/<[^>]*>/g, '').replace(/\./g,'.\n');
 }
@@ -55,7 +57,7 @@ async function getSuggestion(keyword) {
 
   try {
     const response = await requestSync(apiUrl);
-    return response.data.query.search.map(result => result.title);
+    return response.query.search.map(result => result.title);
   } catch (error) {
     return [];
   }
@@ -71,38 +73,41 @@ app.get('/',(req,res)=>{
 })
 
 
-const suggestionz = [];
-app.get('/suggestion', (req,res) => {
-  res.json(suggestionz);
-})
-
 app.get('/msg-hook',(req,res) => {
 	res.json(message);
 })
 
 asyncRouter.post("/webhook", async (req,res) => {
-  let body = req.body;
-  
-  if(body.object === 'page'){
-    
-      const entry = body.entry[0];
-      const user = entry.messaging[0];
-      const psid = user.sender.id;
-      const message = user.message?.text;
-      if ( !message )return;
+
+	if(req.body.object === 'page'){
+	
+	for (const entry of req.body.entry) {
+	// const entry = body.entry[0];
+	const user = entry.messaging[0];
+	const psid = user.sender.id;
+	const message = user.message?.text;
+	const history = msgHistory[psid];
+	if ( !message )return;
       
-      if ( message[0] == "!" ) {
-        typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
-      } else {
+	if ( message[0] == "!" ) {
+		typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
+	} else {
+
+		if (!history || history?.gate != 1) {
+			// gate 1, get user message and search for keywords related to the message
+			const suggestions = await getSuggestion(message);
+			let responseString = '1. '
+			responseString += suggestions.reduce((p,n,i) => `${p}\n${i+1}. ${n}`);
+			await callSendAPI(psid, responseString);
+			
+		}
         
-        console.log("DEBUG: savepoint: not command")
-        await callSendAPI(psid, "DEBUG: default return "+Date.now())
-        
-        
-      }
+	}
         
 
     res.sendStatus(200).send("EVENT_RECEIVED");
+    }
+    
   }else{
     res.sendStatus(404);
   }
