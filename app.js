@@ -123,15 +123,16 @@ asyncRouter.post("/webhook", async (req,res) => {
 	requests.push(entry);
 	const user = entry.messaging[0];
 	const psid = user.sender.id;
-	users.push(psid);
-	if (appMode == "INACTIVE") {
-		await callSendAPI(psid, "INTERNAL: app is in inactive mode.");
-		return;
-	}
 	const message = user.message?.text;
 	const history = msgHistory[psid];
 	if ( !message )return;
-      
+	if (!users.includes(psid))users.push(psid);
+	
+    if (appMode == "INACTIVE") {
+		await callSendAPI(psid, "INTERNAL: app is in inactive mode.");
+		return;
+	}
+    
 	if ( message[0] == "!" ) {
 		typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
 	} else {
