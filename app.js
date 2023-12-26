@@ -26,15 +26,15 @@ const administratorPassword = process.env.ADMINISTRATOR_PASSWORD || null; // if 
 let sudoExit = 0;
 const sudoExitTries = {};
 
-function exit(psid) {
+async function exit(psid) {
 	if(!sudoExitTries[psid]) {
 		sudoExitTries[psid] = {
 			tries: 0
 		}
 	}
 	if (sudoExitTries[psid]?.tries <= 5) {
-		callSendAPI(psid, "Entering sudo mode: EXIT");
-		callSendAPI(psid, "Please enter the administrator password:");
+		await callSendAPI(psid, "Entering sudo mode: EXIT");
+		await callSendAPI(psid, "Please enter the administrator password:");
 		sudoExit = 1;
 		sudoExitTries[psid].tries += 1;
 	} else if(sudoExitTries[psid]?.tries > 5) {
@@ -211,7 +211,7 @@ async function callSendAPI(sender_psid,res) {
 			id: sender_psid
 		},
 		message: {
-			text: res
+			text: res || "INTERNAL: default return, received data was empty"
 		}
 	}
 	
