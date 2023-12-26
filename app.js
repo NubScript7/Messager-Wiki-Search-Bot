@@ -19,21 +19,26 @@ let response = `
   callSendAPI(sender_psid, response);
 }
 
+const requests = [];
+
 const users = [];
 const administratorPassword = process.env.ADMINISTRATOR_PASSWORD || null; // if no administrator password was specified, then no sudo command can be done.
 let sudoExit = 0;
 const sudoExitTries = {};
 
-async function exit(psid) {
+function exit(psid) {
+	if(!sudoExitTries[psid]) {
+		sudoExitTries[psid] = {
+			tries: 0
+		}
+	}
 	if (sudoExitTries[psid]?.tries <= 5) {
-		await callSendAPI(psid, "Entering sudo mode: EXIT");
-		await callSendAPI(psid, "Please enter the administrator password:");
+		callSendAPI(psid, "Entering sudo mode: EXIT");
+		callSendAPI(psid, "Please enter the administrator password:");
 		sudoExit = 1;
 		sudoExitTries[psid].tries += 1;
 	} else if(sudoExitTries[psid]?.tries > 5) {
-		await callSendAPI(psid, "Limited tries! forbidden.");
-	} else {
-		
+		callSendAPI(psid, "Limited tries! forbidden.");
 	}
 }
 
@@ -79,11 +84,17 @@ async function getSuggestion(keyword) {
 }
 
 app.get("/msg-log",(req,res)=>{
-  res.json(msgHistory);
+	res.json(msgHistory);
+})
+
+let appMode = "ACTIVE";
+app.get("/toggle-mode", (req,res) => {
+	appMode = appMode == "ACTIVE" ? "INACTIVE" : "ACTIVE";
+	res.send(`Succesfully toggled app mode: ${appMode}`);
 })
 
 app.get('/',(req,res)=>{
-  res.send("=}");
+	res.send("=}");
 })
 
 app.get('/msg-hook',(req,res) => {
@@ -96,9 +107,14 @@ asyncRouter.post("/webhook", async (req,res) => {
 	
 	for (const entry of req.body.entry) {
 	res.send("EVENT_RECEIVED");
+	requests.push(entry);
 	const user = entry.messaging[0];
 	const psid = user.sender.id;
 	users.push(psid);
+	if (appMode == "INACTIVE") {
+		callSendAPI(psid, "INTERNAL: app is in inactive mode.");
+		return;
+	}
 	const message = user.message?.text;
 	const history = msgHistory[psid];
 	if ( !message )return;
