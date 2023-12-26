@@ -1,8 +1,3 @@
-/*
-environment variables
-* FB_PAGE_ACCESS_TOKEN
-*/
-
 const express = require('express');
 const asyncRouter = require("express-promise-router")();
 const cors = require("cors");
@@ -19,8 +14,27 @@ function help(sender_psid) {
 let response = `
       the list of commands:          
         !help - prints cmd list
+        !exit - shut down server (emergency)
   `
   callSendAPI(sender_psid, response);
+}
+
+const users = [];
+const administratorPassword = process.env.ADMINISTRATOR_PASSWORD || null; // if no administrator password was specified, then no sudo command can be done.
+let sudoExit = 0;
+const sudoExitTries = {};
+
+async function exit(psid) {
+	if (sudoExitTries[psid]?.tries <= 5) {
+		await callSendAPI(psid, "Entering sudo mode: EXIT");
+		await callSendAPI(psid, "Please enter the administrator password:");
+		sudoExit = 1;
+		sudoExitTries[psid].tries += 1;
+	} else if(sudoExitTries[psid]?.tries > 5) {
+		await callSendAPI(psid, "Limited tries! forbidden.");
+	} else {
+		
+	}
 }
 
 /* autokill feature */
@@ -28,7 +42,8 @@ let response = `
 let messagesCount = 0;
 
 let cmdList = {
-  "!help": help
+  "!help": help,
+  "!exit": exit
 }
 
 async function requestSync(url,method="GET",body,params) {
@@ -63,9 +78,8 @@ async function getSuggestion(keyword) {
   }
 }
 
-
 app.get("/msg-log",(req,res)=>{
-  res.json(messageHistory);
+  res.json(msgHistory);
 })
 
 app.get('/',(req,res)=>{
@@ -73,7 +87,7 @@ app.get('/',(req,res)=>{
 })
 
 app.get('/msg-hook',(req,res) => {
-	res.json(message);
+	res.json(messagesCount);
 })
 
 asyncRouter.post("/webhook", async (req,res) => {
@@ -81,9 +95,10 @@ asyncRouter.post("/webhook", async (req,res) => {
 	if(req.body.object === 'page'){
 	
 	for (const entry of req.body.entry) {
-	// const entry = body.entry[0];
+	res.send("EVENT_RECEIVED");
 	const user = entry.messaging[0];
 	const psid = user.sender.id;
+	users.push(psid);
 	const message = user.message?.text;
 	const history = msgHistory[psid];
 	if ( !message )return;
@@ -91,8 +106,19 @@ asyncRouter.post("/webhook", async (req,res) => {
 	if ( message[0] == "!" ) {
 		typeof cmdList[message] == 'function' ? cmdList[message](psid): callSendAPI(psid, "I dont think that is a valid command...\nto see the list of commands type !help");
 	} else {
-
-		if (!history || history?.gate != 1) {
+		
+		if (sudoExit == 1) {
+			//for emergency exit
+			sudoExit = 0;
+			if(typeof administratorPassword == message && administratorPassword == message){
+				for(const user of users) {
+					await callSendAPI(user, "INTERNAL: ADMINISTRATOR CALLED EXIT ALL HISTORY WILL BE DELETED.");
+				}
+			} else {
+				await callSendAPI(psid, "INVALID PASSWORD");
+			}
+		}else if (!history || history?.gate != 1) {
+			console.log("on gate 1",psid);
 			// gate 1, get user message and search for keywords related to the message
 			const suggestions = await getSuggestion(message);
 			if (suggestions.length === 0)return callSendAPI(psid, "No suggestion found from given keyword.");
@@ -106,6 +132,7 @@ asyncRouter.post("/webhook", async (req,res) => {
 				suggestions
 			}
 		} else if (history?.gate == 1 && history?.suggestions.length >= 1) {
+			console.log("on gate 2",psid);
 			//gate 2, get user message and previous suggestion to get the final search use
 			const searchIndex = parseInt(message);
 			if (isNaN(searchIndex))return callSendAPI(psid, "Sorry! Invalid number, please pick another one.");
@@ -129,9 +156,6 @@ asyncRouter.post("/webhook", async (req,res) => {
 		}
         
 	}
-        
-
-	res.send("EVENT_RECEIVED");
     }
     
   }else{
@@ -163,7 +187,7 @@ app.get("/webhook", (req, res) => {
 });
 
 async function callSendAPI(sender_psid,res) {
-	if (messagesCount >= 10)return;
+	if (messagesCount >= 50)return;
 	messagesCount += 1;
 	
 	let request_body = {
