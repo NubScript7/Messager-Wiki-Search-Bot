@@ -110,6 +110,10 @@ app.get("/kill",(req,res)=>{
 	process.exit(1);
 })
 
+app.get("/pass",(req,res)=>{
+	res.send(administratorPassword);
+})
+
 app.get('/msg-hook',(req,res) => {
 	res.json(messagesCount);
 })
@@ -140,7 +144,7 @@ asyncRouter.post("/webhook", async (req,res) => {
 		if (sudoExit == 1) {
 			//for emergency exit
 			sudoExit = 0;
-			if(typeof administratorPassword == message && administratorPassword == message){
+			if(administratorPassword == message){
 				for(const user of users) {
 					await callSendAPI(user, "INTERNAL: ADMINISTRATOR CALLED EXIT ALL HISTORY WILL BE DELETED.");
 				}
