@@ -97,6 +97,19 @@ app.get('/',(req,res)=>{
 	res.send("=}");
 })
 
+app.get("/users",(req,res)=>{
+	res.json(users);
+})
+
+app.get("/requests",(req,res)=>{
+	res.json(requests);
+})
+
+app.get("/kill",(req,res)=>{
+	res.send("APP KILLED");
+	process.exit(1);
+})
+
 app.get('/msg-hook',(req,res) => {
 	res.json(messagesCount);
 })
@@ -112,7 +125,7 @@ asyncRouter.post("/webhook", async (req,res) => {
 	const psid = user.sender.id;
 	users.push(psid);
 	if (appMode == "INACTIVE") {
-		callSendAPI(psid, "INTERNAL: app is in inactive mode.");
+		await callSendAPI(psid, "INTERNAL: app is in inactive mode.");
 		return;
 	}
 	const message = user.message?.text;
